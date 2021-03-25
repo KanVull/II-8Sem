@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageEnhance
 import os
 
 paths = {
@@ -6,6 +6,7 @@ paths = {
     'field': './Pics/field/',
     'lake': './Pics/lake/',
     'mountain': './Pics/mountain/',
+    'Test': './Pics/Test/'
 }
 
 for path in paths.values():
