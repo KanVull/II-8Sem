@@ -1,21 +1,22 @@
-from PIL import Image, ImageStat
 import os
+import numpy as np
+from skimage.feature import greycomatrix, greycoprops
+from skimage import io, color, img_as_ubyte
 
-def getRGB_Average(path):
-    r, b, g = [], [], []
-    image = Image.open(path)
-    rgb_im = image.convert('RGB')
-    for x in range(rgb_im.width):
-        for y in range(rgb_im.height):
-            rgb = rgb_im.getpixel((x,y))
-            r.append(rgb[0])
-            g.append(rgb[1])
-            b.append(rgb[2])
-    r_mean = round(sum(r) / len(r)) / 255
-    g_mean = round(sum(g) / len(g)) / 255
-    b_mean = round(sum(b) / len(b)) / 255
-    # print(r_mean, g_mean, b_mean)
-    return r_mean, g_mean, b_mean
+def GetImageCharacteristics(path):
+    img = io.imread(path)
+    img = img[:,:,:3]
+    gray = color.rgb2gray(img)
+    image = img_as_ubyte(gray)
+
+    bins = np.array([0, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 255]) #16-bit
+    inds = np.digitize(image, bins)
+
+    max_value = inds.max()+1
+    matrix_coocurrence = greycomatrix(inds, [1], [0, np.pi/4, np.pi/2, 3*np.pi/4], levels=max_value, normed=False, symmetric=False)
+    contrast = greycoprops(matrix_coocurrence, 'contrast')
+    correlation = greycoprops(matrix_coocurrence, 'correlation')
+    return contrast.reshape(4), correlation.reshape(4)
 
 if __name__ == '__main__':
     paths = {
@@ -25,9 +26,15 @@ if __name__ == '__main__':
         'mountain': './Pics/mountain/',
     }
 
-    with (open('dataset.csv', 'w')) as dataset:
+    with (open('dataset_clean.csv', 'w')) as dataset:
+        dataset.write('contrast1;contrast2;contrast3;contrast4;correlation1;correlation2;correlation3;correlation4;class\n')
+        names_train_dict = {'forest': 0, 'field': 1, 'lake': 2, 'mountain': 3}
         for path in paths.values():
             for imagename in os.listdir(path):
-                r_mean, g_mean, b_mean = getRGB_Average(path + "/" + imagename)
-                dataset.write(f'{path.split("/")[-2]};{r_mean};{g_mean};{b_mean}\n')
+                s = ''
+                for item in GetImageCharacteristics(path + "/" + imagename):
+                    for i in range(4):
+                        s += f'{item[i]}' + ';'
+                name = path.split("/")[-2]        
+                dataset.write(f'{s}{names_train_dict[name]}\n')
 

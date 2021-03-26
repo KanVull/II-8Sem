@@ -1,4 +1,4 @@
-from getcsv_RGB import getRGB_Average
+from getcsv_RGB import GetImageCharacteristics
 import random
 import pathlib
 import numpy as np
@@ -6,7 +6,7 @@ from PIL import Image
 from tensorflow import keras
 
 def recognize(path, model):
-    data = np.array(getRGB_Average(path)).reshape(1,3)
+    data = np.array(GetImageCharacteristics(path)).reshape(1,8)
     prediction = model.predict(data)
     return np.argmax(prediction[0])
 
